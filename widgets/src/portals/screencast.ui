@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="ScreenCastPage" parent="PortalPage">
+    <child>
+      <object class="GtkBox">
+        <property name="hexpand">True</property>
+        <property name="spacing">12</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="AdwClamp">
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <property name="spacing">12</property>
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <property name="title" translatable="yes">Screen Cast</property>
+                    <property name="description" translatable="yes">Communicates with org.freedesktop.portal.ScreenCast</property>
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Multiple sources</property>
+                        <property name="activatable-widget">multiple_switch</property>
+                        <child>
+                          <object class="GtkSwitch" id="multiple_switch">
+                            <property name="valign">center</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <property name="description" translatable="yes">Content to Record</property>
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Monitor</property>
+                        <property name="activatable-widget">monitor_check</property>
+                        <child>
+                          <object class="GtkCheckButton" id="monitor_check">
+                            <property name="active">True</property>
+                            <property name="valign">center</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Window</property>
+                        <property name="activatable-widget">window_check</property>
+                        <child>
+                          <object class="GtkCheckButton" id="window_check">
+                            <property name="valign">center</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Virtual</property>
+                        <property name="activatable-widget">virtual_check</property>
+                        <child>
+                          <object class="GtkCheckButton" id="virtual_check">
+                            <property name="valign">center</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <property name="description" translatable="yes">Cursor Mode</property>
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Hidden</property>
+                        <property name="activatable-widget">hidden_check</property>
+                        <child>
+                          <object class="GtkCheckButton" id="hidden_check">
+                            <property name="valign">center</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Embedded</property>
+                        <property name="activatable-widget">embedded_check</property>
+                        <child>
+                          <object class="GtkCheckButton" id="embedded_check">
+                            <property name="active">True</property>
+                            <property name="valign">center</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Metadata</property>
+                        <property name="activatable-widget">metadata_check</property>
+                        <child>
+                          <object class="GtkCheckButton" id="metadata_check">
+                            <property name="valign">center</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="orientation">horizontal</property>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label" translatable="yes">_Start Session</property>
+                        <property name="use-underline">True</property>
+                        <property name="halign">start</property>
+                        <property name="action-name">screencast.start</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label" translatable="yes">_Close Session</property>
+                        <property name="use-underline">True</property>
+                        <property name="halign">start</property>
+                        <property name="sensitive">False</property>
+                        <property name="action-name">screencast.stop</property>
+                        <property name="halign">end</property>
+                        <property name="hexpand">True</property>
+                        <style>
+                          <class name="destructive-action" />
+                        </style>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwPreferencesGroup" id="response_group">
+            <property name="visible">False</property>
+            <property name="vexpand">True</property>
+            <child>
+              <object class="AdwCarouselIndicatorLines">
+                <property name="carousel">streams_carousel</property>
+                <property name="margin-top">12</property>
+                <property name="margin-bottom">24</property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwCarousel" id="streams_carousel">
+                <property name="vexpand">True</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <style>
+          <class name="page-content" />
+        </style>
+      </object>
+    </child>
+  </template>
+</interface>

@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "serve",
+    "client",
+    "widgets"
+]

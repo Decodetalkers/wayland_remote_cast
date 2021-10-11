@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="CameraPage" parent="PortalPage">
+    <child>
+      <object class="GtkBox">
+        <property name="hexpand">True</property>
+        <property name="spacing">12</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="AdwClamp">
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <property name="spacing">12</property>
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <property name="title" translatable="yes">Information</property>
+                    <property name="description" translatable="yes">Communicates with org.freedesktop.portal.Camera</property>
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Is a camera available?</property>
+                        <child>
+                          <object class="GtkLabel" id="camera_available">
+                            <property name="label">Undefined</property>
+                            <property name="halign">start</property>
+                            <style>
+                              <class name="dim-label"/>
+                            </style>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="orientation">horizontal</property>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label" translatable="yes">_Start Session</property>
+                        <property name="use-underline">True</property>
+                        <property name="halign">start</property>
+                        <property name="action-name">camera.start</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label" translatable="yes">_Close Session</property>
+                        <property name="use-underline">True</property>
+                        <property name="halign">start</property>
+                        <property name="action-name">camera.stop</property>
+                        <property name="halign">end</property>
+                        <property name="hexpand">True</property>
+                        <style>
+                          <class name="destructive-action" />
+                        </style>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkRevealer" id="revealer">
+            <property name="reveal-child">False</property>
+            <property name="transition-type">crossfade</property>
+            <property name="vexpand">True</property>
+            <child>
+              <object class="GtkPicture" id="picture">
+                <property name="vexpand">True</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <style>
+          <class name="page-content" />
+        </style>
+      </object>
+    </child>
+  </template>
+</interface>
