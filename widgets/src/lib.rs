@@ -1,5 +1,5 @@
-pub mod widgets;
 pub mod portals;
+pub mod widgets;
 #[cfg(test)]
 mod tests {
     #[test]

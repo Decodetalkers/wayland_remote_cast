@@ -2,7 +2,8 @@
 use gtk::prelude::*;
 use widgets::portals::ScreenCastClientPage;
 fn main() {
-    let application = gtk::Application::new(Some("com.gitlab.screencast"), Default::default());
+    let application =
+        gtk::Application::new(Some("com.gitlab.screencast.client"), Default::default());
     application.connect_activate(|app| {
         gst::init().expect("Unable to init gstreamer");
         let window = gtk::ApplicationWindow::new(app);

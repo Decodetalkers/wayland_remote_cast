@@ -1,5 +1,3 @@
-use std::os::unix::io::AsRawFd;
-
 use glib::{Receiver, Sender};
 use gst::prelude::*;
 use gtk::prelude::*;
@@ -142,23 +140,25 @@ mod camera_sink {
                 Ok(())
             }
         }
+        // When something is update , It send something make the frame flash. So there must be
+        // something here.
         impl VideoSinkImpl for CameraSink {
-            fn show_frame(
-                &self,
-                _element: &Self::Type,
-                buffer: &gst::Buffer,
-            ) -> Result<gst::FlowSuccess, gst::FlowError> {
-                if let Some(info) = &*self.info.lock().unwrap() {
-                    let frame = Frame::new(buffer, info);
-                    let mut last_frame = self.pending_frame.lock().unwrap();
+            //fn show_frame(
+            //    &self,
+            //    _element: &Self::Type,
+            //    buffer: &gst::Buffer,
+            //) -> Result<gst::FlowSuccess, gst::FlowError> {
+            //    if let Some(info) = &*self.info.lock().unwrap() {
+            //        let frame = Frame::new(buffer, info);
+            //        let mut last_frame = self.pending_frame.lock().unwrap();
 
-                    last_frame.replace(frame);
-                    let sender = self.sender.lock().unwrap();
+            //        last_frame.replace(frame);
+            //        let sender = self.sender.lock().unwrap();
 
-                    sender.as_ref().unwrap().send(Action::FrameChanged).unwrap();
-                }
-                Ok(gst::FlowSuccess::Ok)
-            }
+            //        sender.as_ref().unwrap().send(Action::FrameChanged).unwrap();
+            //    }
+            //    Ok(gst::FlowSuccess::Ok)
+            //}
         }
     }
 
@@ -281,63 +281,73 @@ impl CameraPaintableClient {
         glib::Object::new(&[]).expect("Failed to create a CameraPaintable")
     }
 
-    pub fn set_pipewire_fd<F: AsRawFd>(&self, fd: F) {
-        let raw_fd = fd.as_raw_fd();
-        tracing::debug!("Loading PipeWire FD: {}", raw_fd);
-        let pipewire_element = gst::ElementFactory::make("pipewiresrc", None).unwrap();
-        pipewire_element.set_property("fd", &raw_fd).unwrap();
-        self.init_pipeline(pipewire_element);
-    }
+    // TODO. It should be removed, because in the client, I do not need pipewire. But I am course
+    // what happened.
+    //pub fn set_pipewire_fd<F: AsRawFd>(&self, fd: F) {
+    //    // Since I have known the fd is from the proxy. It should be a mark for the location fo the
+    //    // window to be record. Here It is turned to i32, for next step.
+    //    let raw_fd = fd.as_raw_fd();
 
-    pub fn set_pipewire_node_id<F: AsRawFd>(&self, fd: F, node_id: u32) {
-        let raw_fd = fd.as_raw_fd();
-        tracing::debug!("Loading PipeWire Node ID: {} with FD: {}", node_id, raw_fd);
-        let pipewire_element = gst::ElementFactory::make("pipewiresrc", None).unwrap();
-        pipewire_element.set_property("fd", &raw_fd).unwrap();
-        pipewire_element
-            .set_property("path", &node_id.to_string())
-            .unwrap();
-        self.init_pipeline(pipewire_element);
-    }
+    //    // TODO . I don't known what crate it is, but it seems to be like assert?
+    //    tracing::debug!("Loading PipeWire FD: {}", raw_fd);
 
-    fn init_pipeline(&self, pipewire_src: gst::Element) {
-        tracing::debug!("Init pipeline");
-        let self_ = imp::CameraPaintable::from_instance(self);
-        let pipeline = gst::Pipeline::new(None);
-        let convert = gst::ElementFactory::make("videoconvert", None).unwrap();
-        let queue1 = gst::ElementFactory::make("queue", None).unwrap();
-        let queue2 = gst::ElementFactory::make("queue", None).unwrap();
-        pipeline
-            .add_many(&[
-                &pipewire_src,
-                &queue1,
-                &convert,
-                &queue2,
-                &self_.sink.clone().upcast(),
-            ])
-            .unwrap();
+    //    // here ,key It set the screan version
+    //    let pipewire_element = gst::ElementFactory::make("pipewiresrc", None).unwrap();
+    //    pipewire_element.set_property("fd", &raw_fd).unwrap();
+    //    self.init_pipeline(pipewire_element);
+    //}
 
-        pipewire_src.link(&queue1).unwrap();
-        queue1.link(&convert).unwrap();
-        convert.link(&queue2).unwrap();
-        queue2.link(&self_.sink).unwrap();
+    //pub fn set_pipewire_node_id<F: AsRawFd>(&self, fd: F, node_id: u32) {
+    //    let raw_fd = fd.as_raw_fd();
+    //    tracing::debug!("Loading PipeWire Node ID: {} with FD: {}", node_id, raw_fd);
+    //    let pipewire_element = gst::ElementFactory::make("pipewiresrc", None).unwrap();
+    //    pipewire_element.set_property("fd", &raw_fd).unwrap();
+    //    pipewire_element
+    //        .set_property("path", &node_id.to_string())
+    //        .unwrap();
+    //    self.init_pipeline(pipewire_element);
+    //}
 
-        let bus = pipeline.bus().unwrap();
-        bus.add_watch_local(move |_, msg| {
-            if let gst::MessageView::Error(err) = msg.view() {
-                tracing::error!(
-                    "Error from {:?}: {} ({:?})",
-                    err.src().map(|s| s.path_string()),
-                    err.error(),
-                    err.debug()
-                );
-            }
-            glib::Continue(true)
-        })
-        .expect("Failed to add bus watch");
-        pipeline.set_state(gst::State::Playing).unwrap();
-        self_.pipeline.replace(Some(pipeline));
-    }
+    //// I think it should be a very key function. But the element, what is it?
+    //fn init_pipeline(&self, pipewire_src: gst::Element) {
+    //    tracing::debug!("Init pipeline");
+    //    // Init. get the self.
+    //    let self_ = imp::CameraPaintable::from_instance(self);
+    //    let pipeline = gst::Pipeline::new(None);
+    //    let convert = gst::ElementFactory::make("videoconvert", None).unwrap();
+    //    let queue1 = gst::ElementFactory::make("queue", None).unwrap();
+    //    let queue2 = gst::ElementFactory::make("queue", None).unwrap();
+    //    pipeline
+    //        .add_many(&[
+    //            &pipewire_src,
+    //            &queue1,
+    //            &convert,
+    //            &queue2,
+    //            &self_.sink.clone().upcast(),
+    //        ])
+    //        .unwrap();
+
+    //    pipewire_src.link(&queue1).unwrap();
+    //    queue1.link(&convert).unwrap();
+    //    convert.link(&queue2).unwrap();
+    //    queue2.link(&self_.sink).unwrap();
+
+    //    let bus = pipeline.bus().unwrap();
+    //    bus.add_watch_local(move |_, msg| {
+    //        if let gst::MessageView::Error(err) = msg.view() {
+    //            tracing::error!(
+    //                "Error from {:?}: {} ({:?})",
+    //                err.src().map(|s| s.path_string()),
+    //                err.error(),
+    //                err.debug()
+    //            );
+    //        }
+    //        glib::Continue(true)
+    //    })
+    //    .expect("Failed to add bus watch");
+    //    pipeline.set_state(gst::State::Playing).unwrap();
+    //    self_.pipeline.replace(Some(pipeline));
+    //}
 
     pub fn close_pipeline(&self) {
         tracing::debug!("Closing pipeline");
@@ -348,44 +358,40 @@ impl CameraPaintableClient {
     }
 
     // entrance ? maybe ? but it is not any_trait
-    pub fn init_widgets(&self) {
-        let self_ = imp::CameraPaintable::from_instance(self);
-        let receiver = self_.receiver.borrow_mut().take().unwrap();
-        receiver.attach(
+    fn init_widgets(&self) {
+        imp::CameraPaintable::from_instance(self);
+        let (tx, rx) = gtk::glib::MainContext::channel(gtk::glib::PRIORITY_DEFAULT);
+        std::thread::Builder::new()
+            .name("get_stream".into())
+            .spawn(move || {
+                let listener = TcpListener::bind("127.0.0.1:8000").unwrap();
+                for stream in listener.incoming() {
+                    let mut buffer: Vec<u8> = vec![];
+                    stream.unwrap().read_to_end(&mut buffer).unwrap();
+                    tx.send(buffer).expect("error");
+                }
+            })
+            .expect("error");
+        rx.attach(
             None,
-            glib::clone!(@weak self as paintable => @default-return glib::Continue(false), move |action| paintable.do_action(action)),
+            glib::clone!(@weak self as paintable => @default-return glib::Continue(false), move |buffer| paintable.do_action(buffer)),
         );
     }
     // receive message
-    fn do_action(&self, action: camera_sink::Action) -> glib::Continue {
+    fn do_action(&self, buffer: Vec<u8>) -> glib::Continue {
         let self_ = imp::CameraPaintable::from_instance(self);
-        match action {
-            camera_sink::Action::FrameChanged => {
-                if self_.sink.pending_frame().is_some() {
-                    let listener = TcpListener::bind("127.0.0.1:8000").unwrap();
-                    let (mut stream, _) = match listener.accept() {
-                        Ok(a) => a,
-                        Err(_) => return glib::Continue(true),
-                    };
-                    let mut buffer: Vec<u8> = vec![];
-                    stream.read_to_end(&mut buffer).unwrap();
-                    let m = gst::buffer::Buffer::from_slice(buffer);
-                    let info =
-                        gst_video::VideoInfo::builder(gst_video::VideoFormat::Bgra, 2880, 1800)
-                            .build()
-                            .unwrap();
-                    let b =
-                        gst_video::video_frame::VideoFrame::from_buffer_readable(m, &info).unwrap();
-                    let c = camera_sink::Frame(b);
-                    //println!("{:?}",a);
-                    //let b = frame.0.format().to_string();
-                    //println!("{:?}",b);
-                    self_.size.replace(Some((2880, 1800)));
-                    self_.image.replace(Some(c.into()));
-                    self.invalidate_contents();
-                }
-            }
-        }
+        let m = gst::buffer::Buffer::from_slice(buffer);
+        let info = gst_video::VideoInfo::builder(gst_video::VideoFormat::Bgra, 2880, 1800)
+            .build()
+            .unwrap();
+        let b = gst_video::video_frame::VideoFrame::from_buffer_readable(m, &info).unwrap();
+        let c = camera_sink::Frame(b);
+        //println!("{:?}",a);
+        //let b = frame.0.format().to_string();
+        //println!("{:?}",b);
+        self_.size.replace(Some((2880, 1800)));
+        self_.image.replace(Some(c.into()));
+        self.invalidate_contents();
 
         glib::Continue(true)
     }

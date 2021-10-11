@@ -3,18 +3,17 @@ use crate::widgets::{
 };
 use ashpd::{
     desktop::{
-        screencast::{CursorMode, ScreenCastProxy, SourceType, Stream},
+        screencast::{CursorMode, ScreenCastProxy, SourceType},
         SessionProxy,
     },
     enumflags2::BitFlags,
-    zbus, WindowIdentifier,
+    zbus,
 };
 use futures::lock::Mutex;
 use glib::clone;
 use gtk::glib;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
-use std::os::unix::io::RawFd;
 use std::sync::Arc;
 // It is a imp
 mod imp {
@@ -114,69 +113,56 @@ impl ScreenCastClientPage {
     }
 
     /// Returns the selected SourceType
-    fn selected_sources(&self) -> BitFlags<SourceType> {
-        let self_ = imp::ScreenCastPage::from_instance(self);
-        let mut sources: BitFlags<SourceType> = BitFlags::empty();
-        if self_.monitor_check.is_active() {
-            sources.insert(SourceType::Monitor);
-        }
-        if self_.window_check.is_active() {
-            sources.insert(SourceType::Window);
-        }
-        sources
-    }
+    //fn selected_sources(&self) -> BitFlags<SourceType> {
+    //    let self_ = imp::ScreenCastPage::from_instance(self);
+    //    let mut sources: BitFlags<SourceType> = BitFlags::empty();
+    //    if self_.monitor_check.is_active() {
+    //        sources.insert(SourceType::Monitor);
+    //    }
+    //    if self_.window_check.is_active() {
+    //        sources.insert(SourceType::Window);
+    //    }
+    //    sources
+    //}
 
-    /// Returns the selected CursorMode
-    fn selected_cursor_mode(&self) -> BitFlags<CursorMode> {
-        let self_ = imp::ScreenCastPage::from_instance(self);
+    ///// Returns the selected CursorMode
+    //fn selected_cursor_mode(&self) -> BitFlags<CursorMode> {
+    //    let self_ = imp::ScreenCastPage::from_instance(self);
 
-        let mut cursor_mode: BitFlags<CursorMode> = BitFlags::empty();
-        if self_.hidden_check.is_active() {
-            cursor_mode.insert(CursorMode::Hidden);
-        }
-        if self_.embedded_check.is_active() {
-            cursor_mode.insert(CursorMode::Embedded);
-        }
-        if self_.metadata_check.is_active() {
-            cursor_mode.insert(CursorMode::Metadata);
-        }
-        cursor_mode
-    }
+    //    let mut cursor_mode: BitFlags<CursorMode> = BitFlags::empty();
+    //    if self_.hidden_check.is_active() {
+    //        cursor_mode.insert(CursorMode::Hidden);
+    //    }
+    //    if self_.embedded_check.is_active() {
+    //        cursor_mode.insert(CursorMode::Embedded);
+    //    }
+    //    if self_.metadata_check.is_active() {
+    //        cursor_mode.insert(CursorMode::Metadata);
+    //    }
+    //    cursor_mode
+    //}
 
     async fn start_session(&self) {
         let self_ = imp::ScreenCastPage::from_instance(self);
         self.action_set_enabled("screencast.start", false);
         self.action_set_enabled("screencast.stop", true);
-
-        match self.screencast().await {
-            Ok((streams, fd, session)) => {
-                self.send_notification(
-                    "Screen cast session started successfully",
-                    NotificationKind::Success,
-                );
-                streams.iter().for_each(|stream| {
-                    let paintable = CameraPaintableClient::new();
-                    let picture = gtk::Picture::builder()
-                        .paintable(&paintable)
-                        .hexpand(true)
-                        .vexpand(true)
-                        .build();
-                    // here  pipewire is a refcell ,now it is replaceed
-                    paintable.set_pipewire_node_id(fd, stream.pipe_wire_node_id());
-                    self_.streams_carousel.append(&picture);
-                });
-                self_.response_group.show();
-                self_.session.lock().await.replace(session);
-            }
-            Err(err) => {
-                tracing::error!("{:#?}", err);
-                self.send_notification(
-                    "Failed to start a screen cast session",
-                    NotificationKind::Error,
-                );
-                self.stop_session().await;
-            }
-        };
+        // TODO remove the screencast, but how
+        self.send_notification(
+            "Screen cast session started successfully",
+            NotificationKind::Success,
+        );
+        // when I catch two screen , the len of vec become two, and the widget appends two.
+        // It is reall nonsence
+        let paintable = CameraPaintableClient::new();
+        let picture = gtk::Picture::builder()
+            .paintable(&paintable)
+            .hexpand(true)
+            .vexpand(true)
+            .build();
+        // here  pipewire is a refcell ,now it is replaceed
+        //paintable.init_widgets();
+        self_.streams_carousel.append(&picture);
+        self_.response_group.show();
     }
 
     async fn stop_session(&self) {
@@ -209,28 +195,28 @@ impl ScreenCastClientPage {
 
         self_.response_group.hide();
     }
+    // TODO remove
+    //async fn screencast(&self) -> ashpd::Result<(Vec<Stream>, RawFd, SessionProxy<'static>)> {
+    //    let self_ = imp::ScreenCastPage::from_instance(self);
+    //    let sources = self.selected_sources();
+    //    let cursor_mode = self.selected_cursor_mode();
+    //    let multiple = self_.multiple_switch.is_active();
 
-    async fn screencast(&self) -> ashpd::Result<(Vec<Stream>, RawFd, SessionProxy<'static>)> {
-        let self_ = imp::ScreenCastPage::from_instance(self);
-        let sources = self.selected_sources();
-        let cursor_mode = self.selected_cursor_mode();
-        let multiple = self_.multiple_switch.is_active();
+    //    let identifier = WindowIdentifier::default();
 
-        let identifier = WindowIdentifier::default();
+    //    let connection = zbus::Connection::session().await?;
+    //    let proxy = ScreenCastProxy::new(&connection).await?;
+    //    let session = proxy.create_session().await?;
 
-        let connection = zbus::Connection::session().await?;
-        let proxy = ScreenCastProxy::new(&connection).await?;
-        let session = proxy.create_session().await?;
+    //    proxy
+    //        .select_sources(&session, cursor_mode, sources, multiple)
+    //        .await?;
+    //    self.send_notification("Starting a screen cast session", NotificationKind::Info);
+    //    let streams = proxy.start(&session, &identifier).await?.to_vec();
 
-        proxy
-            .select_sources(&session, cursor_mode, sources, multiple)
-            .await?;
-        self.send_notification("Starting a screen cast session", NotificationKind::Info);
-        let streams = proxy.start(&session, &identifier).await?.to_vec();
-
-        let fd = proxy.open_pipe_wire_remote(&session).await?;
-        Ok((streams, fd, session))
-    }
+    //    let fd = proxy.open_pipe_wire_remote(&session).await?;
+    //    Ok((streams, fd, session))
+    //}
 }
 
 pub async fn available_types() -> ashpd::Result<(BitFlags<CursorMode>, BitFlags<SourceType>)> {
