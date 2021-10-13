@@ -1,5 +1,3 @@
-use std::io::prelude::*;
-use std::net::TcpStream;
 use std::os::unix::io::AsRawFd;
 
 use glib::{Receiver, Sender};
@@ -7,7 +5,11 @@ use gst::prelude::*;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{gdk, glib, graphene};
-
+use lazy_static::lazy_static;
+use std::sync::{Arc,RwLock};
+lazy_static! {
+    static ref GLOBAL_SCREEN : Arc<RwLock<Option<Vec<u8>>>> = Arc::new(RwLock::new(None));
+}
 mod camera_sink {
     use std::convert::AsRef;
 
@@ -274,7 +276,7 @@ mod imp {
 glib::wrapper! {
     pub struct CameraPaintable(ObjectSubclass<imp::CameraPaintable>) @implements gdk::Paintable;
 }
-
+use ws::{connect, Message};
 impl CameraPaintable {
     pub fn new() -> Self {
         glib::Object::new(&[]).expect("Failed to create a CameraPaintable")
@@ -351,6 +353,24 @@ impl CameraPaintable {
         let self_ = imp::CameraPaintable::from_instance(self);
 
         let receiver = self_.receiver.borrow_mut().take().unwrap();
+        std::thread::spawn(||{
+            connect("ws://127.0.0.1:3012", move |out| {
+                out.send("hello").unwrap();
+                //out.send(Message::Binary(a.clone())).unwrap();
+                move |msg| {
+                    let screen = GLOBAL_SCREEN.read().unwrap();
+                    if let Some(output) = &*screen {
+                        out.send(Message::Binary(output.clone())).unwrap();
+                    } else {
+                        out.send("none").unwrap();
+                    }
+                    println!("{}", msg);
+                    //out.shutdown()
+                    Ok(())
+                }
+            })
+            .unwrap();
+        });
         receiver.attach(
             None,
             glib::clone!(@weak self as paintable => @default-return glib::Continue(false), move |action| paintable.do_action(action)),
@@ -362,17 +382,30 @@ impl CameraPaintable {
         match action {
             camera_sink::Action::FrameChanged => {
                 if let Some(frame) = self_.sink.pending_frame() {
-                    let mut server = match TcpStream::connect("127.0.0.1:8000") {
-                        Ok(server) => server,
-                        Err(_) => return glib::Continue(true),
-                    };
+                    //let mut server = match TcpStream::connect("127.0.0.1:8000") {
+                    //    Ok(server) => server,
+                    //    Err(_) => return glib::Continue(true),
+                    //};
 
                     let a: Vec<u8> = frame.as_ref().to_owned();
                     //println!("{:?}",a);
-                    if server.write(&a).is_err() {
-                        return glib::Continue(true);
-                    };
-                    server.flush().unwrap();
+                    //if server.write(&a).is_err() {
+                    //    return glib::Continue(true);
+                    //};
+                    //std::thread::spawn(||{
+                    //connect("ws://127.0.0.1:3012", move |out| {
+                    //    out.send(Message::Binary(a.clone())).unwrap();
+                    //        move |msg| {
+                    //            println!("{}", msg);
+                    //            out.shutdown()
+                    //        }
+                    //    })
+                    //    .unwrap();
+                        
+                    //});
+                    let mut screen = GLOBAL_SCREEN.write().unwrap();
+                    *screen = Some(a);
+                    //server.flush().unwrap();
                     let (width, height) = (frame.width(), frame.height());
                     self_.size.replace(Some((width, height)));
                     self_.image.replace(Some(frame.into()));

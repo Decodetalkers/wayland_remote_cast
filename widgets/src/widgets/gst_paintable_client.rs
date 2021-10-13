@@ -272,9 +272,8 @@ mod imp {
 glib::wrapper! {
     pub struct CameraPaintableClient(ObjectSubclass<imp::CameraPaintable>) @implements gdk::Paintable;
 }
-use std::io::prelude::*;
-use std::net::TcpListener;
 
+use ws::{connect, Message};
 //use axum::extract::ws;
 impl CameraPaintableClient {
     pub fn new() -> Self {
@@ -364,12 +363,33 @@ impl CameraPaintableClient {
         std::thread::Builder::new()
             .name("get_stream".into())
             .spawn(move || {
-                let listener = TcpListener::bind("127.0.0.1:8000").unwrap();
-                for stream in listener.incoming() {
-                    let mut buffer: Vec<u8> = vec![];
-                    stream.unwrap().read_to_end(&mut buffer).unwrap();
-                    tx.send(buffer).expect("error");
-                }
+                //let listener = TcpListener::bind("127.0.0.1:8000").unwrap();
+                //for stream in listener.incoming() {
+                //    let mut buffer: Vec<u8> = vec![];
+                //    stream.unwrap().read_to_end(&mut buffer).unwrap();
+                //    tx.send(buffer).expect("error");
+                //}
+                connect("ws://127.0.0.1:3012", |_out| {
+                    let tx2 = tx.clone();
+                    //out.send("Hello WebSocket").unwrap();
+                    move |msg| {
+                        //out.send("ssss").unwrap();
+                        match msg {
+                            Message::Text(_) => {
+                                //tx2.send("none").unwrap();
+                                println!("it is a message");
+                            },
+                            Message::Binary(ref buffer) => {
+                                println!("it is buffer");
+                                tx2.send(buffer.clone()).expect("error")
+                            }
+                        }
+                        //println!("Got message: {}", msg);
+                        //out.close(CloseCode::Normal)
+                        Ok(())
+                    }
+                })
+                .unwrap();
             })
             .expect("error");
         rx.attach(

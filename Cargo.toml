@@ -3,5 +3,6 @@
 members = [
     "serve",
     "client",
-    "widgets"
+    "widgets",
+    "onserve"
 ]
